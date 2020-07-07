@@ -186,17 +186,19 @@ type HeaderExtractor string
 func (e HeaderExtractor) Extract(c *gin.Context) (string, error) {
 	var headerName string
 	var headerValuePrefix string
+	var adjIdx = 0
 
-	vals := strings.Split(strings.Trim(string(e), " "), ":")
-	headerName = vals[0]
+	vals := strings.Split(string(e), ":")
+	headerName = strings.ToLower(strings.TrimSpace(vals[0]))
 	if len(vals) == 2 {
-		headerValuePrefix = vals[1]
+		headerValuePrefix = strings.ToLower(strings.TrimSpace(vals[1]))
+		adjIdx = 1
 	}
 
 	if val := c.GetHeader(headerName); len(val) != 0 &&
 		strings.Index(strings.ToLower(val), headerValuePrefix) != -1 {
 		pos := strings.Index(strings.ToLower(val), headerValuePrefix)
-		adjPos := pos + len(headerValuePrefix) + 1
+		adjPos := pos + len(headerValuePrefix) + adjIdx
 		if adjPos >= len(val) {
 			return "", errors.New("malformed header")
 		} else {
@@ -210,7 +212,7 @@ func (e HeaderExtractor) Extract(c *gin.Context) (string, error) {
 type QueryExtractor string
 
 func (qe QueryExtractor) Extract(c *gin.Context) (string, error) {
-	if val := c.Query(strings.Trim(string(qe), " ")); len(val) != 0 {
+	if val := c.Query(strings.TrimSpace(string(qe))); len(val) != 0 {
 		return val, nil
 	} else {
 		return "", errors.New("no token present")
@@ -220,7 +222,7 @@ func (qe QueryExtractor) Extract(c *gin.Context) (string, error) {
 type PostFormExtractor string
 
 func (e PostFormExtractor) Extract(c *gin.Context) (string, error) {
-	if val := c.PostForm(strings.Trim(string(e), " ")); len(val) != 0 {
+	if val := c.PostForm(strings.TrimSpace(string(e))); len(val) != 0 {
 		return val, nil
 	} else {
 		return "", errors.New("no token present")
@@ -230,7 +232,7 @@ func (e PostFormExtractor) Extract(c *gin.Context) (string, error) {
 type CookieExtractor string
 
 func (e CookieExtractor) Extract(c *gin.Context) (string, error) {
-	if val, err := c.Cookie(strings.Trim(string(e), " ")); err == nil {
+	if val, err := c.Cookie(strings.TrimSpace(string(e))); err == nil {
 		return val, nil
 	} else {
 		return "", errors.New("no token present")
@@ -265,10 +267,10 @@ func DenyAll() gin.HandlerFunc {
 	}
 }
 
-func ClaimsAllowed(allowedClaims ...string) gin.HandlerFunc {
+func ScopesAllowed(allowedScopes ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if roles, present := c.Get("claims"); !present ||
-			len(allowedClaims) == 0 || !containsAll(roles.([]string), allowedClaims) {
+		if roles, present := c.Get("scopes"); !present ||
+			len(allowedScopes) == 0 || !containsAll(roles.([]string), allowedScopes) {
 			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
