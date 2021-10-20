@@ -3,8 +3,8 @@ package gin_authn
 import (
 	"encoding/json"
 	"errors"
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt"
 	"github.com/square/go-jose"
 	"net/http"
 	"strings"
